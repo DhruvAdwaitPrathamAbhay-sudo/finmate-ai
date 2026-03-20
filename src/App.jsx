@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Sidebar from './components/Layout/Sidebar';
 import Topbar from './components/Layout/Topbar';
@@ -66,10 +66,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AppProvider>
         <AppRoutes />
       </AppProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
