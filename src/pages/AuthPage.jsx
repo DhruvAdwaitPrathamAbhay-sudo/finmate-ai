@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, CheckCircle, Lock, Mail, User, Shield, ArrowRight, Sparkles, Smile } from 'lucide-react';
+import {
+  Eye, EyeOff, CheckCircle, Lock, Mail, User, Shield, ArrowRight, Sparkles,
+  Brain, ChartPie, Target, ChartLine // feature icons
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,7 +20,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(false);
 
-  // Detect system theme for adaptive styling
+  // Detect system theme
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDark(mediaQuery.matches);
@@ -27,10 +30,10 @@ export default function AuthPage() {
   }, []);
 
   const features = [
-    'AI-powered insights',
-    'Interactive analytics',
-    'Goal-based tracker',
-    'Predictive planning',
+    { text: 'AI-powered insights', icon: Brain },
+    { text: 'Interactive analytics', icon: ChartPie },
+    { text: 'Goal-based tracker', icon: Target },
+    { text: 'Predictive planning', icon: ChartLine },
   ];
 
   const checkPasswordStrength = (password) => {
@@ -56,7 +59,6 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
 
-    // Validation
     if (!form.email || !form.password) {
       setError('Please fill in all required fields.');
       return;
@@ -131,8 +133,12 @@ export default function AuthPage() {
     setMode('login');
   };
 
-  // Styles (inline, but can be extracted to CSS module)
   const bgImageUrl = 'https://img.freepik.com/premium-photo/3d-holographic-representation-fintech-technology-concept-with-digital-elements-blue-orange-futuristic-cyber-background_124865-96627.jpg?ga=GA1.1.1347717580.1769188783&w=740&q=80';
+
+  // Helper functions for dynamic colors
+  const getTextColor = (light, dark) => (isDark ? dark : light);
+  const getBgColor = (light, dark) => (isDark ? dark : light);
+  const getBorderColor = (light, dark) => (isDark ? dark : light);
 
   const containerStyle = {
     position: 'relative',
@@ -144,7 +150,7 @@ export default function AuthPage() {
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundAttachment: 'fixed',
-    backgroundColor: '#0f111a', // fallback
+    backgroundColor: '#0f111a',
   };
 
   const overlayStyle = {
@@ -171,10 +177,6 @@ export default function AuthPage() {
     boxShadow: '0 25px 40px -12px rgba(0, 0, 0, 0.3)',
   };
 
-  const getTextColor = (light, dark) => (isDark ? dark : light);
-  const getBgColor = (light, dark) => (isDark ? dark : light);
-  const getBorderColor = (light, dark) => (isDark ? dark : light);
-
   return (
     <div style={containerStyle}>
       <div style={overlayStyle} />
@@ -184,7 +186,7 @@ export default function AuthPage() {
         transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
         style={cardStyle}
       >
-        {/* Logo Area */}
+        {/* Logo Area - chart-line icon */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
             display: 'inline-flex',
@@ -197,7 +199,7 @@ export default function AuthPage() {
             marginBottom: 16,
             boxShadow: '0 8px 16px -6px rgba(0,0,0,0.2)',
           }}>
-            <i className="fas fa-chart-line" style={{ fontSize: 32, color: 'white' }}></i>
+            <ChartLine size={32} color="white" />
           </div>
           <h1 style={{
             fontSize: 28,
@@ -213,7 +215,7 @@ export default function AuthPage() {
           }}>Smart finance, human touch</p>
         </div>
 
-        {/* Features Grid */}
+        {/* Features Grid with proper icons */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -221,8 +223,8 @@ export default function AuthPage() {
           marginBottom: 32,
           padding: '8px 0',
         }}>
-          {features.map(f => (
-            <div key={f} style={{
+          {features.map(({ text, icon: Icon }) => (
+            <div key={text} style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
@@ -230,8 +232,8 @@ export default function AuthPage() {
               fontWeight: 500,
               color: getTextColor('#334155', '#cbd5e1'),
             }}>
-              <CheckCircle size={14} color={isDark ? '#60a5fa' : '#2563eb'} />
-              {f}
+              <Icon size={14} color={isDark ? '#60a5fa' : '#2563eb'} />
+              {text}
             </div>
           ))}
         </div>
