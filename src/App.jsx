@@ -11,7 +11,9 @@ import ChatbotPage from './pages/ChatbotPage';
 import InsightsPage from './pages/InsightsPage';
 import PredictionsPage from './pages/PredictionsPage';
 import GoalsPage from './pages/GoalsPage';
-
+import {
+   ChartLine // feature icons
+} from 'lucide-react';
 const PAGE_TITLES = {
   '/dashboard': '🏠 Dashboard',
   '/expenses': '💸 Expense Tracker',
@@ -29,7 +31,7 @@ function ProtectedLayout() {
   if (!user) return <Navigate to="/" replace />;
 
   const path = window.location.pathname;
-  const title = PAGE_TITLES[path] || '💎 FinMate AI';
+  const title = PAGE_TITLES[path] || 'ChartLine FinMate AI';
 
   return (
     <div className="app-layout">
