@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { getMonthExpenses, getCategoryTotals, getRiskLevel, detectSubscriptions, formatCurrency, getTotalAmount } from '../utils/calculations';
 import { AlertTriangle, Lightbulb, TrendingDown, RefreshCw, Shield } from 'lucide-react';
+import GlassCard from '../components/ui/GlassCard';
+import FloatingIcon from '../components/ui/FloatingIcon';
 
 const CATEGORY_EMOJIS = {
     Food: '🍱', Transportation: '🚌', Education: '📚',
@@ -21,6 +23,9 @@ const SAVING_TIPS = {
     Others: ['Track and categorize uncategorized expenses', 'Set a weekly cash limit', 'Review "Others" category weekly'],
 };
 
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } } };
+const fadeUp = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
+
 export default function InsightsPage() {
     const { expenses, monthlyIncome, budgets } = useApp();
 
@@ -36,36 +41,29 @@ export default function InsightsPage() {
     const riskBadge = { Low: 'badge-green', Medium: 'badge-yellow', High: 'badge-red' }[riskLevel];
     const riskIcon = { Low: '🟢', Medium: '🟡', High: '🔴' }[riskLevel];
 
-    // Top 3 spending categories for tips
     const topCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([cat]) => cat);
-
-    // Unnecessary expenses: top category with >50% budget used AND in Entertainment/Shopping
     const unnecessary = Object.entries(catTotals).filter(([cat, amt]) => ['Entertainment', 'Shopping'].includes(cat) && amt > budgets[cat] * 0.5);
 
-    // Weekly AI summary
     const weekSummary = `This week you've spent ${formatCurrency(total)} in ${Object.keys(catTotals).length} categories. ${riskLevel === 'High' ? '⚠️ Your risk level is HIGH — take immediate action to reduce spending.' : riskLevel === 'Medium' ? '🟡 You\'re at medium risk. Monitor your budget closely.' : '✅ You\'re in great shape financially this month!'}`;
 
     return (
         <div className="page-wrapper">
-            <div className="page-header">
+            <motion.div className="page-header" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <div>
                     <h2 className="page-title">💡 Smart Insights</h2>
                     <p className="page-subtitle">AI-powered analysis of your financial health</p>
                 </div>
-            </div>
+            </motion.div>
 
-            {/* Risk Level card — prominent */}
-            <motion.div
-                className="glass-card"
-                style={{ padding: 28, marginBottom: 20, background: `linear-gradient(135deg, ${riskColor}18 0%, transparent 100%)`, border: `1px solid ${riskColor}44` }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
+            {/* Risk Level card */}
+            <GlassCard delay={0.05} style={{ padding: 28, marginBottom: 20, background: `linear-gradient(135deg, ${riskColor}18 0%, transparent 100%)`, border: `1px solid ${riskColor}44` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: 60 }}>{riskIcon}</div>
+                    <FloatingIcon size={64} color="transparent" amplitude={6}>
+                        <span style={{ fontSize: 48 }}>{riskIcon}</span>
+                    </FloatingIcon>
                     <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>Financial Risk Level</div>
-                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 36, fontWeight: 800, color: riskColor }}>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 800, color: riskColor }}>
                             {riskLevel} Risk
                         </div>
                         <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>
@@ -89,16 +87,10 @@ export default function InsightsPage() {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </GlassCard>
 
             {/* Weekly AI Summary */}
-            <motion.div
-                className="glass-card insight-card"
-                style={{ marginBottom: 20 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
+            <GlassCard delay={0.1} className="insight-card" style={{ marginBottom: 20 }}>
                 <div className="insight-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>
                     <RefreshCw size={20} color="var(--accent-blue)" />
                 </div>
@@ -106,44 +98,32 @@ export default function InsightsPage() {
                     <div style={{ fontWeight: 600, marginBottom: 6 }}>📊 Weekly AI Summary Report</div>
                     <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{weekSummary}</div>
                 </div>
-            </motion.div>
+            </GlassCard>
 
             {/* Overspending Alerts */}
             {overspentCats.length > 0 && (
-                <motion.div
-                    className="glass-card"
-                    style={{ padding: 20, marginBottom: 20, background: 'var(--grad-danger)', border: '1px solid rgba(239,68,68,0.3)' }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                >
+                <GlassCard delay={0.15} style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(239,68,68,0.3)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                         <AlertTriangle size={18} color="var(--accent-red)" />
                         <h3 style={{ fontWeight: 700, color: 'var(--accent-red)' }}>⚠️ Overspending Alerts</h3>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={stagger} initial="hidden" animate="show">
                         {overspentCats.map(([cat, amt]) => {
                             const over = amt - budgets[cat];
                             return (
-                                <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>
+                                <motion.div key={cat} variants={fadeUp} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>
                                     <span>{CATEGORY_EMOJIS[cat]} <strong>{cat}</strong></span>
                                     <span style={{ color: 'var(--accent-red)', fontWeight: 600 }}>Over by {formatCurrency(over)}</span>
-                                </div>
+                                </motion.div>
                             );
                         })}
-                    </div>
-                </motion.div>
+                    </motion.div>
+                </GlassCard>
             )}
 
             <div className="two-col">
                 {/* Saving Tips */}
-                <motion.div
-                    className="glass-card"
-                    style={{ padding: 24 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                >
+                <GlassCard delay={0.2} style={{ padding: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                         <Lightbulb size={18} color="var(--accent-yellow)" />
                         <h3 style={{ fontWeight: 700 }}>💡 Personalized Saving Tips</h3>
@@ -151,9 +131,9 @@ export default function InsightsPage() {
                     {topCats.length === 0 ? (
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Add expenses to get personalized tips!</p>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 16 }} variants={stagger} initial="hidden" animate="show">
                             {topCats.map(cat => (
-                                <div key={cat}>
+                                <motion.div key={cat} variants={fadeUp}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                         <span>{CATEGORY_EMOJIS[cat]}</span>
                                         <span style={{ fontWeight: 600, fontSize: 14 }}>{cat}</span>
@@ -167,21 +147,15 @@ export default function InsightsPage() {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
-                        </div>
+                        </motion.div>
                     )}
-                </motion.div>
+                </GlassCard>
 
                 {/* Unnecessary Expenses + Subscriptions */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    <motion.div
-                        className="glass-card"
-                        style={{ padding: 24 }}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.25 }}
-                    >
+                    <GlassCard delay={0.25} style={{ padding: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                             <TrendingDown size={18} color="var(--accent-orange)" />
                             <h3 style={{ fontWeight: 700 }}>💸 Cut Unnecessary Expenses</h3>
@@ -189,27 +163,21 @@ export default function InsightsPage() {
                         {unnecessary.length === 0 ? (
                             <div style={{ fontSize: 14, color: 'var(--accent-green)' }}>✅ No flagged unnecessary expenses this month. Great discipline!</div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={stagger} initial="hidden" animate="show">
                                 {unnecessary.map(([cat, amt]) => (
-                                    <div key={cat} style={{ padding: '12px', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 10 }}>
+                                    <motion.div key={cat} variants={fadeUp} style={{ padding: '12px', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 10 }}>
                                         <div style={{ fontWeight: 600, fontSize: 14 }}>{CATEGORY_EMOJIS[cat]} {cat}</div>
                                         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                                             ₹{amt.toLocaleString('en-IN')} spent • Consider cutting by 20% = save {formatCurrency(amt * 0.2)}/month
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 ))}
-                            </div>
+                            </motion.div>
                         )}
-                    </motion.div>
+                    </GlassCard>
 
                     {/* Subscription Detector */}
-                    <motion.div
-                        className="glass-card"
-                        style={{ padding: 24 }}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                    >
+                    <GlassCard delay={0.3} style={{ padding: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                             <RefreshCw size={18} color="var(--accent-purple)" />
                             <h3 style={{ fontWeight: 700 }}>🔄 Recurring Expenses Detected</h3>
@@ -217,17 +185,17 @@ export default function InsightsPage() {
                         {subs.length === 0 ? (
                             <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No repeated expenses detected. Good spending variety!</div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={stagger} initial="hidden" animate="show">
                                 {subs.slice(0, 5).map(s => (
-                                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: 8, fontSize: 13 }}>
+                                    <motion.div key={s.id} variants={fadeUp} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: 8, fontSize: 13 }}>
                                         <span>{CATEGORY_EMOJIS[s.category]} {s.description || s.category}</span>
                                         <span className="badge badge-purple">{formatCurrency(s.amount)}/recurring</span>
-                                    </div>
+                                    </motion.div>
                                 ))}
                                 <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Review these subscriptions and cancel ones you don't use!</p>
-                            </div>
+                            </motion.div>
                         )}
-                    </motion.div>
+                    </GlassCard>
                 </div>
             </div>
         </div>

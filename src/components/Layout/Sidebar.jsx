@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import {
     LayoutDashboard, Wallet, BarChart2, Bot, Lightbulb,
-    TrendingUp, Target, LogOut, X, Menu
+    TrendingUp, Target, LogOut, X
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +16,18 @@ const navItems = [
     { path: '/predictions', icon: TrendingUp, label: 'Predictions' },
     { path: '/goals', icon: Target, label: 'Goals' },
 ];
+
+const navVariants = {
+    hidden: {},
+    show: {
+        transition: { staggerChildren: 0.04, delayChildren: 0.1 },
+    },
+};
+
+const navItemVariants = {
+    hidden: { opacity: 0, x: -12 },
+    show: { opacity: 1, x: 0, transition: { duration: 0.25 } },
+};
 
 export default function Sidebar({ open, onClose }) {
     const { user, logout, monthlyIncome, updateIncome } = useApp();
@@ -29,7 +42,10 @@ export default function Sidebar({ open, onClose }) {
         <>
             {/* Mobile overlay */}
             {open && (
-                <div
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99, backdropFilter: 'blur(4px)' }}
                     onClick={onClose}
                 />
@@ -41,7 +57,7 @@ export default function Sidebar({ open, onClose }) {
                             <h1>💎 FinMate AI</h1>
                             <p>Smart Finance for Students</p>
                         </div>
-                        <button className="btn-icon" onClick={onClose} style={{ display: 'none' }} id="close-sidebar">
+                        <button className="btn-icon" onClick={onClose} id="close-sidebar">
                             <X size={16} />
                         </button>
                     </div>
@@ -49,17 +65,24 @@ export default function Sidebar({ open, onClose }) {
 
                 <nav className="sidebar-nav">
                     <p className="nav-section-title">Main Menu</p>
-                    {navItems.map(({ path, icon: Icon, label }) => (
-                        <NavLink
-                            key={path}
-                            to={path}
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                            onClick={onClose}
-                        >
-                            <Icon size={18} />
-                            {label}
-                        </NavLink>
-                    ))}
+                    <motion.div
+                        variants={navVariants}
+                        initial="hidden"
+                        animate="show"
+                    >
+                        {navItems.map(({ path, icon: Icon, label }) => (
+                            <motion.div key={path} variants={navItemVariants}>
+                                <NavLink
+                                    to={path}
+                                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                                    onClick={onClose}
+                                >
+                                    <Icon size={18} />
+                                    {label}
+                                </NavLink>
+                            </motion.div>
+                        ))}
+                    </motion.div>
 
                     <p className="nav-section-title" style={{ marginTop: 24 }}>Settings</p>
                     <div style={{ padding: '8px 10px' }}>

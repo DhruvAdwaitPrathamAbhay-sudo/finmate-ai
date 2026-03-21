@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import {
     TrendingUp, TrendingDown, Wallet, PiggyBank, AlertTriangle, X,
-    Star, Zap, Target, ArrowRight
+    Star, Zap, Target, ArrowRight, Plus
 } from 'lucide-react';
 import {
     getMonthExpenses, getTotalAmount, getCategoryTotals, getTopCategory,
@@ -15,6 +15,9 @@ import {
     CategoryScale, LinearScale, BarElement
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import GlassCard from '../components/ui/GlassCard';
+import FloatingIcon from '../components/ui/FloatingIcon';
+import MagneticButton from '../components/ui/MagneticButton';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -30,23 +33,8 @@ const CATEGORY_EMOJIS = {
     Healthcare: '💊', Others: '📦'
 };
 
-function StatCard({ label, value, sub, icon, color, delay = 0 }) {
-    return (
-        <motion.div
-            className="glass-card stat-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay, duration: 0.4 }}
-        >
-            <div className="stat-label">{label}</div>
-            <div className="stat-value mono" style={{ color: color || 'var(--text-primary)' }}>{value}</div>
-            {sub && <div className="stat-sub">{sub}</div>}
-            <div className="stat-icon" style={{ color: color || 'var(--accent-purple)' }}>
-                {icon}
-            </div>
-        </motion.div>
-    );
-}
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
+const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 
 export default function DashboardPage() {
     const { expenses, monthlyIncome, budgets, overspendAlert, setOverspendAlert, user, goals, theme } = useApp();
@@ -63,7 +51,6 @@ export default function DashboardPage() {
     const catTotals = useMemo(() => getCategoryTotals(thisMonth), [thisMonth]);
     const topCat = useMemo(() => getTopCategory(thisMonth), [thisMonth]);
     const riskLevel = getRiskLevel(total, monthlyIncome);
-    const totalBudget = Object.values(budgets).reduce((s, v) => s + v, 0);
     const savedThisMonth = Math.max(0, lastTotal - total);
     const prediction = useMemo(() => predictNextMonth(expenses), [expenses]);
 
@@ -156,173 +143,159 @@ export default function DashboardPage() {
                             exit={{ scale: 0.8, y: 40 }}
                         >
                             <div style={{ fontSize: 52, marginBottom: 12 }}>🚨</div>
-                            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 8, color: 'var(--accent-red)' }}>
-                                Overspending Alert!
+                            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, marginBottom: 8, color: 'var(--accent-red)' }}>
+                                Whoa, slow down! 💸
                             </h2>
                             <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-                                You've exceeded your <strong style={{ color: 'var(--accent-orange)' }}>{overspendAlert}</strong> budget this month.
-                                Time to cut back on this category!
+                                You've blown past your <strong style={{ color: 'var(--accent-red)' }}>{overspendAlert}</strong> budget this month.
+                                Let's get back on track!
                             </p>
-                            <button className="btn btn-danger" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setOverspendAlert(false)}>
+                            <MagneticButton variant="danger" onClick={() => setOverspendAlert(false)} style={{ width: '100%', justifyContent: 'center' }}>
                                 <X size={16} /> Got it, I'll be careful
-                            </button>
+                            </MagneticButton>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            <div className="page-header">
+            {/* Page Header */}
+            <motion.div
+                className="page-header"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+            >
                 <div>
                     <h2 className="page-title">👋 Welcome back, {user?.name?.split(' ')[0]}!</h2>
                     <p className="page-subtitle">Here's your financial overview for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                 </div>
-                <button className="btn btn-primary btn-sm" onClick={() => navigate('/expenses')}>
-                    + Add Expense <ArrowRight size={14} />
-                </button>
-            </div>
+            </motion.div>
 
-            {/* Savings banner */}
+            {/* Savings Banner */}
             {savedThisMonth > 0 && (
                 <motion.div className="savings-banner" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                     <Star size={18} />
-                    You saved {formatCurrency(savedThisMonth)} compared to last month! Keep it up! 🎉
+                    You're crushing it! 🔥 Saved {formatCurrency(savedThisMonth)} compared to last month!
                 </motion.div>
             )}
 
-            {/* Stats Grid */}
-            <div className="stats-grid">
-                <StatCard
-                    label="Monthly Spending"
-                    value={formatCurrency(total)}
-                    sub={`${isUp ? '↑' : '↓'} ${Math.abs(diffPct)}% vs last month`}
-                    icon={<TrendingUp size={36} />}
-                    color={isUp ? 'var(--accent-red)' : 'var(--accent-green)'}
-                    delay={0.05}
-                />
-                <StatCard
-                    label="Remaining Balance"
-                    value={formatCurrency(Math.abs(remaining))}
-                    sub={remaining < 0 ? '⚠️ Over budget!' : 'Available to spend'}
-                    icon={<Wallet size={36} />}
-                    color={remaining < 0 ? 'var(--accent-red)' : 'var(--accent-green)'}
-                    delay={0.1}
-                />
-                <StatCard
-                    label="Monthly Income"
-                    value={formatCurrency(monthlyIncome)}
-                    sub="Set in sidebar settings"
-                    icon={<PiggyBank size={36} />}
-                    delay={0.15}
-                />
-                <StatCard
-                    label="Risk Level"
-                    value={riskLevel}
-                    sub={`${Math.round((total / monthlyIncome) * 100)}% of income used`}
-                    icon={<AlertTriangle size={36} />}
-                    color={riskColor}
-                    delay={0.2}
-                />
-            </div>
-
-            {/* Budget Progress */}
-            <motion.div
-                className="glass-card"
-                style={{ padding: 24, marginBottom: 20 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-            >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                    <h3 className="chart-title" style={{ margin: 0 }}>📊 Budget Usage</h3>
-                    {topCat && (
-                        <span className="badge badge-purple">
-                            <Zap size={11} /> Top: {CATEGORY_EMOJIS[topCat[0]]} {topCat[0]}
-                        </span>
-                    )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {Object.entries(budgets).map(([cat, budget]) => {
-                        const spent = catTotals[cat] || 0;
-                        const pct = Math.min(100, Math.round((spent / budget) * 100));
-                        const isOver = spent > budget;
-                        return (
-                            <div key={cat}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 13 }}>
-                                    <span style={{ color: 'var(--text-secondary)' }}>
-                                        {CATEGORY_EMOJIS[cat]} {cat}
-                                    </span>
-                                    <span style={{ color: isOver ? 'var(--accent-red)' : 'var(--text-muted)', fontWeight: 600 }}>
-                                        {formatCurrency(spent)} / {formatCurrency(budget)}
-                                        {isOver && ' ⚠️'}
-                                    </span>
-                                </div>
-                                <div className="progress-bar-wrap">
-                                    <motion.div
-                                        className={`progress-bar-fill ${isOver ? 'danger' : pct > 75 ? 'warning' : ''}`}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${pct}%` }}
-                                        transition={{ duration: 0.8, delay: 0.3 }}
-                                    />
-                                </div>
+            {/* Bento Grid */}
+            <motion.div className="bento-grid" variants={stagger} initial="hidden" animate="show">
+                {/* Large stat card — spans 2 cols */}
+                <GlassCard span="2col" delay={0.05} style={{ padding: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <FloatingIcon color="rgba(139,92,246,0.15)" delay={0}>
+                            <Wallet size={22} color="var(--accent-purple)" />
+                        </FloatingIcon>
+                        <div style={{ flex: 1 }}>
+                            <div className="stat-label">Monthly Spending</div>
+                            <div className="stat-value mono" style={{ color: isUp ? 'var(--accent-red)' : 'var(--accent-green)' }}>{formatCurrency(total)}</div>
+                            <div className="stat-sub">{isUp ? '↑' : '↓'} {Math.abs(diffPct)}% vs last month</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div className="stat-label">Remaining</div>
+                            <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: remaining < 0 ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+                                {formatCurrency(Math.abs(remaining))}
                             </div>
-                        );
-                    })}
-                </div>
-            </motion.div>
+                            <div className="stat-sub">{remaining < 0 ? '⚠️ Over budget!' : 'Available'}</div>
+                        </div>
+                    </div>
+                </GlassCard>
 
-            {/* Charts Row */}
-            <div className="two-col">
-                <motion.div
-                    className="glass-card chart-container"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                >
+                {/* Income */}
+                <GlassCard delay={0.1} style={{ padding: 20 }}>
+                    <FloatingIcon color="rgba(34,197,94,0.15)" delay={0.2} size={38}>
+                        <PiggyBank size={18} color="var(--accent-green)" />
+                    </FloatingIcon>
+                    <div className="stat-label" style={{ marginTop: 12 }}>Income</div>
+                    <div className="stat-value mono" style={{ fontSize: 22 }}>{formatCurrency(monthlyIncome)}</div>
+                    <div className="stat-sub">Monthly</div>
+                </GlassCard>
+
+                {/* Risk Level */}
+                <GlassCard delay={0.15} style={{ padding: 20 }}>
+                    <FloatingIcon color={riskLevel === 'High' ? 'rgba(239,68,68,0.15)' : riskLevel === 'Medium' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)'} delay={0.3} size={38}>
+                        <AlertTriangle size={18} color={riskColor} />
+                    </FloatingIcon>
+                    <div className="stat-label" style={{ marginTop: 12 }}>Risk Level</div>
+                    <div className="stat-value mono" style={{ fontSize: 22, color: riskColor }}>{riskLevel}</div>
+                    <div className="stat-sub">{Math.round((total / monthlyIncome) * 100)}% used</div>
+                </GlassCard>
+
+                {/* Pie Chart — spans 2 cols */}
+                <GlassCard span="2col" delay={0.2} style={{ padding: 24 }}>
                     <h3 className="chart-title">🥧 Spending by Category</h3>
                     {Object.keys(catTotals).length > 0 ? (
-                        <Pie data={pieData} options={chartOptions} />
+                        <div style={{ maxWidth: 320, margin: '0 auto' }}>
+                            <Pie data={pieData} options={chartOptions} />
+                        </div>
                     ) : (
                         <div className="empty-state">
                             <div className="empty-state-icon">📊</div>
                             <p>No expenses this month yet.</p>
-                            <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => navigate('/expenses')}>
-                                Add your first expense
-                            </button>
                         </div>
                     )}
-                </motion.div>
+                </GlassCard>
 
-                <motion.div
-                    className="glass-card chart-container"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 }}
-                >
-                    <h3 className="chart-title">📊 Budget vs Spent</h3>
+                {/* Budget vs Spent — spans 2 cols */}
+                <GlassCard span="2col" delay={0.25} style={{ padding: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <h3 className="chart-title" style={{ margin: 0 }}>📊 Budget vs Spent</h3>
+                        {topCat && (
+                            <span className="badge badge-purple">
+                                <Zap size={11} /> Top: {CATEGORY_EMOJIS[topCat[0]]} {topCat[0]}
+                            </span>
+                        )}
+                    </div>
                     <Bar data={budgetData} options={barOptions} />
-                </motion.div>
-            </div>
+                </GlassCard>
 
-            {/* Bottom row: Goals preview + Prediction */}
-            <div className="two-col" style={{ marginTop: 20 }}>
-                <motion.div
-                    className="glass-card"
-                    style={{ padding: 24 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                >
+                {/* Budget Progress — full width */}
+                <GlassCard span="full" delay={0.3} style={{ padding: 24 }}>
+                    <h3 className="chart-title">📋 Budget Breakdown</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+                        {Object.entries(budgets).map(([cat, budget]) => {
+                            const spent = catTotals[cat] || 0;
+                            const pct = Math.min(100, Math.round((spent / budget) * 100));
+                            const isOver = spent > budget;
+                            return (
+                                <div key={cat}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 13 }}>
+                                        <span style={{ color: 'var(--text-secondary)' }}>
+                                            {CATEGORY_EMOJIS[cat]} {cat}
+                                        </span>
+                                        <span style={{ color: isOver ? 'var(--accent-red)' : 'var(--text-muted)', fontWeight: 600 }}>
+                                            {formatCurrency(spent)} / {formatCurrency(budget)}
+                                            {isOver && ' 🔥'}
+                                        </span>
+                                    </div>
+                                    <div className="progress-bar-wrap">
+                                        <motion.div
+                                            className={`progress-bar-fill ${isOver ? 'danger' : pct > 75 ? 'warning' : ''}`}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${pct}%` }}
+                                            transition={{ duration: 0.8, delay: 0.3 }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </GlassCard>
+
+                {/* Goals Preview */}
+                <GlassCard span="2col" delay={0.35} style={{ padding: 24 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                         <h3 className="chart-title" style={{ margin: 0 }}>🎯 Savings Goals</h3>
-                        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/goals')}>View All</button>
+                        <MagneticButton variant="secondary" size="sm" onClick={() => navigate('/goals')}>View All</MagneticButton>
                     </div>
                     {goals.length === 0 ? (
                         <div className="empty-state" style={{ padding: 24 }}>
                             <div className="empty-state-icon">🎯</div>
-                            <p>No goals set yet</p>
-                            <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => navigate('/goals')}>
+                            <p>No goals set yet — let's fix that!</p>
+                            <MagneticButton size="sm" onClick={() => navigate('/goals')} style={{ marginTop: 12 }}>
                                 Set a Goal
-                            </button>
+                            </MagneticButton>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -332,15 +305,12 @@ export default function DashboardPage() {
                                     <div key={g.id}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
                                             <span style={{ fontWeight: 500 }}>🎯 {g.name}</span>
-                                            <span style={{ color: 'var(--text-muted)' }}>{pct}%</span>
+                                            <span style={{ color: pct >= 100 ? 'var(--accent-green)' : 'var(--text-muted)', fontWeight: 600 }}>
+                                                {pct >= 100 ? '✅ Done!' : `${pct}%`}
+                                            </span>
                                         </div>
                                         <div className="progress-bar-wrap">
-                                            <motion.div
-                                                className="progress-bar-fill"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${pct}%` }}
-                                                transition={{ duration: 0.8 }}
-                                            />
+                                            <motion.div className="progress-bar-fill" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8 }} />
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
                                             <span>{formatCurrency(g.saved)} saved</span>
@@ -351,18 +321,13 @@ export default function DashboardPage() {
                             })}
                         </div>
                     )}
-                </motion.div>
+                </GlassCard>
 
-                <motion.div
-                    className="glass-card"
-                    style={{ padding: 24, background: 'var(--grad-card)' }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45 }}
-                >
+                {/* Prediction card */}
+                <GlassCard span="2col" delay={0.4} style={{ padding: 24, background: 'var(--grad-card)' }}>
                     <h3 className="chart-title">🔮 Next Month Prediction</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <div style={{ display: 'flex', justify: 'space-between', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: 12 }}>
                             <div className="glass-card" style={{ flex: 1, padding: '16px 14px', textAlign: 'center' }}>
                                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>This Month</div>
                                 <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-blue)' }}>{formatCurrency(total)}</div>
@@ -374,49 +339,51 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: 'var(--text-secondary)' }}>
-                            ⚠️ Spending is predicted to increase by ~12% next month. Consider setting stricter budgets now!
+                            ⚠️ Heads up! Spending might climb ~12% next month. Stay ahead of it!
                         </div>
-                        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/predictions')}>
+                        <MagneticButton variant="secondary" size="sm" onClick={() => navigate('/predictions')}>
                             View Full Prediction <ArrowRight size={13} />
-                        </button>
+                        </MagneticButton>
                     </div>
-                </motion.div>
-            </div>
+                </GlassCard>
 
-            {/* Recent Expenses */}
-            <motion.div
-                className="glass-card"
-                style={{ padding: 24, marginTop: 20 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-            >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <h3 className="chart-title" style={{ margin: 0 }}>🕐 Recent Transactions</h3>
-                    <button className="btn btn-secondary btn-sm" onClick={() => navigate('/expenses')}>View All</button>
-                </div>
-                {thisMonth.length === 0 ? (
-                    <div className="empty-state" style={{ padding: 24 }}>
-                        <div className="empty-state-icon">💸</div>
-                        <p>No expenses this month</p>
+                {/* Recent Expenses — full width */}
+                <GlassCard span="full" delay={0.45} style={{ padding: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <h3 className="chart-title" style={{ margin: 0 }}>🕐 Recent Transactions</h3>
+                        <MagneticButton variant="secondary" size="sm" onClick={() => navigate('/expenses')}>View All</MagneticButton>
                     </div>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {[...thisMonth].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map(e => (
-                            <div key={e.id} className="expense-item">
-                                <div className={`expense-icon cat-${e.category.toLowerCase()}`}>
-                                    {CATEGORY_EMOJIS[e.category]}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: 14, fontWeight: 500 }}>{e.description}</div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{e.category} • {new Date(e.date).toLocaleDateString('en-IN')}</div>
-                                </div>
-                                <div className="mono" style={{ fontWeight: 700, color: 'var(--accent-red)' }}>-{formatCurrency(e.amount)}</div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                    {thisMonth.length === 0 ? (
+                        <div className="empty-state" style={{ padding: 24 }}>
+                            <div className="empty-state-icon">💸</div>
+                            <p>No expenses this month — your wallet thanks you! 😄</p>
+                        </div>
+                    ) : (
+                        <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={stagger} initial="hidden" animate="show">
+                            {[...thisMonth].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5).map((e, i) => (
+                                <motion.div key={e.id} className="expense-item" variants={fadeUp}>
+                                    <div className={`expense-icon cat-${e.category.toLowerCase()}`}>
+                                        {CATEGORY_EMOJIS[e.category]}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: 14, fontWeight: 500 }}>{e.description}</div>
+                                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{e.category} • {new Date(e.date).toLocaleDateString('en-IN')}</div>
+                                    </div>
+                                    <div className="mono" style={{ fontWeight: 700, color: 'var(--accent-red)' }}>-{formatCurrency(e.amount)}</div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+                </GlassCard>
             </motion.div>
+
+            {/* Floating CTA */}
+            <MagneticButton
+                className="floating-cta"
+                onClick={() => navigate('/expenses')}
+            >
+                <Plus size={18} /> Add Expense
+            </MagneticButton>
         </div>
     );
 }

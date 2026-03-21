@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import {
@@ -7,6 +7,7 @@ import {
     CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler
 } from 'chart.js';
 import { getMonthExpenses, getWeeklyTrend, getMonthlyTrend, getCategoryTotals, formatCurrency } from '../utils/calculations';
+import GlassCard from '../components/ui/GlassCard';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Filler);
 
@@ -14,6 +15,12 @@ const CATEGORY_COLORS = {
     Food: '#f97316', Transportation: '#3b82f6', Education: '#8b5cf6',
     Entertainment: '#ec4899', Shopping: '#eab308', Bills: '#ef4444',
     Healthcare: '#22c55e', Others: '#94a3b8'
+};
+
+const CATEGORY_EMOJIS = {
+    Food: '🍱', Transportation: '🚌', Education: '📚',
+    Entertainment: '🎬', Shopping: '🛒', Bills: '📱',
+    Healthcare: '💊', Others: '📦'
 };
 
 export default function ChartsPage() {
@@ -98,12 +105,12 @@ export default function ChartsPage() {
 
     return (
         <div className="page-wrapper">
-            <div className="page-header">
+            <motion.div className="page-header" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <div>
                     <h2 className="page-title">📊 Charts & Analytics</h2>
                     <p className="page-subtitle">Visual breakdown of your spending patterns</p>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Tab Switch */}
             <div className="tabs" style={{ maxWidth: 300, marginBottom: 24 }}>
@@ -111,122 +118,143 @@ export default function ChartsPage() {
                 <button className={`tab-btn ${tab === 'weekly' ? 'active' : ''}`} onClick={() => setTab('weekly')}>📆 Weekly</button>
             </div>
 
-            {tab === 'monthly' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    {/* Pie + Bar row */}
-                    <div className="two-col">
-                        <motion.div className="glass-card chart-container" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                            <h3 className="chart-title">🥧 Category Breakdown</h3>
-                            {Object.keys(catTotals).length > 0 ? (
-                                <Pie data={pieData} options={opts} />
-                            ) : (
-                                <div className="empty-state"><div className="empty-state-icon">📊</div><p>Add expenses to see breakdown</p></div>
-                            )}
-                        </motion.div>
-
-                        <motion.div className="glass-card chart-container" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                            <h3 className="chart-title">📊 Monthly Spending Trend (6 months)</h3>
-                            <Bar data={barMonthlyData} options={barOpts} />
-                        </motion.div>
-                    </div>
-
-                    {/* Category Details */}
-                    <motion.div className="glass-card" style={{ padding: 24 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                        <h3 className="chart-title">💰 This Month by Category</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
-                            {Object.entries(catTotals).sort((a, b) => b[1] - a[1]).map(([cat, amt]) => (
-                                <div key={cat} style={{ padding: '14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}>
-                                    <div style={{ fontSize: 24, marginBottom: 6 }}>
-                                        {cat === 'Food' ? '🍱' : cat === 'Transportation' ? '🚌' : cat === 'Education' ? '📚' : cat === 'Entertainment' ? '🎬' : cat === 'Shopping' ? '🛒' : cat === 'Bills' ? '📱' : cat === 'Healthcare' ? '💊' : '📦'}
+            <AnimatePresence mode="wait">
+                {tab === 'monthly' ? (
+                    <motion.div
+                        key="monthly"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.25 }}
+                        style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+                    >
+                        <div className="two-col">
+                            <GlassCard delay={0.05} className="chart-container">
+                                <h3 className="chart-title">🥧 Category Breakdown</h3>
+                                {Object.keys(catTotals).length > 0 ? (
+                                    <div style={{ maxWidth: 300, margin: '0 auto' }}>
+                                        <Pie data={pieData} options={opts} />
                                     </div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{cat}</div>
-                                    <div className="mono" style={{ fontWeight: 700, color: CATEGORY_COLORS[cat], marginTop: 4 }}>{formatCurrency(amt)}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
+                                ) : (
+                                    <div className="empty-state"><div className="empty-state-icon">📊</div><p>Add expenses to see breakdown</p></div>
+                                )}
+                            </GlassCard>
 
-                    {/* Monthly summary table */}
-                    <motion.div className="glass-card" style={{ padding: 24 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-                        <h3 className="chart-title">📋 Monthly Summary</h3>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                        {['Month', 'Total Spent', 'vs Previous', 'Status'].map(h => (
-                                            <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {monthlyTrend.map((m, i) => {
-                                        const prev = monthlyTrend[i - 1];
-                                        const diff = prev ? ((m.total - prev.total) / (prev.total || 1)) * 100 : 0;
-                                        const isUp = diff > 0;
-                                        return (
-                                            <tr key={m.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                                <td style={{ padding: '12px 14px', fontWeight: 500 }}>{m.label}</td>
-                                                <td style={{ padding: '12px 14px' }} className="mono">{formatCurrency(m.total)}</td>
-                                                <td style={{ padding: '12px 14px', color: i === 0 ? 'var(--text-muted)' : isUp ? 'var(--accent-red)' : 'var(--accent-green)' }}>
-                                                    {i === 0 ? '—' : `${isUp ? '↑' : '↓'} ${Math.abs(diff.toFixed(1))}%`}
-                                                </td>
-                                                <td style={{ padding: '12px 14px' }}>
-                                                    <span className={`badge ${m.total > 10000 ? 'badge-red' : m.total > 5000 ? 'badge-yellow' : 'badge-green'}`}>
-                                                        {m.total > 10000 ? '⚠️ High' : m.total > 5000 ? '🟡 Medium' : '✅ Low'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                            <GlassCard delay={0.1} className="chart-container">
+                                <h3 className="chart-title">📊 Monthly Spending Trend (6 months)</h3>
+                                <Bar data={barMonthlyData} options={barOpts} />
+                            </GlassCard>
                         </div>
-                    </motion.div>
-                </div>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    <motion.div className="glass-card chart-container" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                        <h3 className="chart-title">📈 Weekly Spending Trend (8 weeks)</h3>
-                        <Line data={lineWeeklyData} options={barOpts} />
-                    </motion.div>
 
-                    <motion.div className="glass-card chart-container" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                        <h3 className="chart-title">📊 Weekly Expense Analysis</h3>
-                        <Bar data={barWeeklyData} options={barOpts} />
-                    </motion.div>
+                        {/* Category Detail Grid */}
+                        <GlassCard delay={0.15} style={{ padding: 24 }}>
+                            <h3 className="chart-title">💰 This Month by Category</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                                {Object.entries(catTotals).sort((a, b) => b[1] - a[1]).map(([cat, amt], i) => (
+                                    <motion.div
+                                        key={cat}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.2 + i * 0.05 }}
+                                        style={{ padding: '14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, textAlign: 'center' }}
+                                    >
+                                        <div style={{ fontSize: 24, marginBottom: 6 }}>{CATEGORY_EMOJIS[cat]}</div>
+                                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{cat}</div>
+                                        <div className="mono" style={{ fontWeight: 700, color: CATEGORY_COLORS[cat], marginTop: 4 }}>{formatCurrency(amt)}</div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </GlassCard>
 
-                    <motion.div className="glass-card" style={{ padding: 24 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                        <h3 className="chart-title">📋 Weekly Breakdown</h3>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                        {['Week', 'Total Spent', 'Trend'].map(h => (
-                                            <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {weeklyTrend.map((w, i) => {
-                                        const prev = weeklyTrend[i - 1];
-                                        const diff = prev ? ((w.total - prev.total) / (prev.total || 1)) * 100 : 0;
-                                        const isUp = diff > 0;
-                                        return (
-                                            <tr key={w.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                                <td style={{ padding: '12px 14px', fontWeight: 500 }}>{w.label}</td>
-                                                <td style={{ padding: '12px 14px' }} className="mono">{formatCurrency(w.total)}</td>
-                                                <td style={{ padding: '12px 14px', color: i === 0 ? 'var(--text-muted)' : isUp ? 'var(--accent-red)' : 'var(--accent-green)' }}>
-                                                    {i === 0 ? 'Baseline' : `${isUp ? '↑' : '↓'} ${Math.abs(diff.toFixed(1))}%`}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                        {/* Monthly Summary Table */}
+                        <GlassCard delay={0.2} style={{ padding: 24 }}>
+                            <h3 className="chart-title">📋 Monthly Summary</h3>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                            {['Month', 'Total Spent', 'vs Previous', 'Status'].map(h => (
+                                                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {monthlyTrend.map((m, i) => {
+                                            const prev = monthlyTrend[i - 1];
+                                            const diff = prev ? ((m.total - prev.total) / (prev.total || 1)) * 100 : 0;
+                                            const isUp = diff > 0;
+                                            return (
+                                                <tr key={m.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                                    <td style={{ padding: '12px 14px', fontWeight: 500 }}>{m.label}</td>
+                                                    <td style={{ padding: '12px 14px' }} className="mono">{formatCurrency(m.total)}</td>
+                                                    <td style={{ padding: '12px 14px', color: i === 0 ? 'var(--text-muted)' : isUp ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+                                                        {i === 0 ? '—' : `${isUp ? '↑' : '↓'} ${Math.abs(diff.toFixed(1))}%`}
+                                                    </td>
+                                                    <td style={{ padding: '12px 14px' }}>
+                                                        <span className={`badge ${m.total > 10000 ? 'badge-red' : m.total > 5000 ? 'badge-yellow' : 'badge-green'}`}>
+                                                            {m.total > 10000 ? '⚠️ High' : m.total > 5000 ? '🟡 Medium' : '✅ Low'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </GlassCard>
                     </motion.div>
-                </div>
-            )}
+                ) : (
+                    <motion.div
+                        key="weekly"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.25 }}
+                        style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+                    >
+                        <GlassCard delay={0.05} className="chart-container">
+                            <h3 className="chart-title">📈 Weekly Spending Trend (8 weeks)</h3>
+                            <Line data={lineWeeklyData} options={barOpts} />
+                        </GlassCard>
+
+                        <GlassCard delay={0.1} className="chart-container">
+                            <h3 className="chart-title">📊 Weekly Expense Analysis</h3>
+                            <Bar data={barWeeklyData} options={barOpts} />
+                        </GlassCard>
+
+                        <GlassCard delay={0.15} style={{ padding: 24 }}>
+                            <h3 className="chart-title">📋 Weekly Breakdown</h3>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                            {['Week', 'Total Spent', 'Trend'].map(h => (
+                                                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {weeklyTrend.map((w, i) => {
+                                            const prev = weeklyTrend[i - 1];
+                                            const diff = prev ? ((w.total - prev.total) / (prev.total || 1)) * 100 : 0;
+                                            const isUp = diff > 0;
+                                            return (
+                                                <tr key={w.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                                    <td style={{ padding: '12px 14px', fontWeight: 500 }}>{w.label}</td>
+                                                    <td style={{ padding: '12px 14px' }} className="mono">{formatCurrency(w.total)}</td>
+                                                    <td style={{ padding: '12px 14px', color: i === 0 ? 'var(--text-muted)' : isUp ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+                                                        {i === 0 ? 'Baseline' : `${isUp ? '↑' : '↓'} ${Math.abs(diff.toFixed(1))}%`}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </GlassCard>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, Search, Filter, X, Check } from 'lucide-react';
 import { formatCurrency } from '../utils/calculations';
+import GlassCard from '../components/ui/GlassCard';
+import MagneticButton from '../components/ui/MagneticButton';
 
 const CATEGORY_EMOJIS = {
     Food: '🍱', Transportation: '🚌', Education: '📚',
@@ -15,6 +17,9 @@ const CAT_CLASSES = {
     Entertainment: 'cat-entertainment', Shopping: 'cat-shopping', Bills: 'cat-bills',
     Healthcare: 'cat-healthcare', Others: 'cat-others'
 };
+
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.03 } } };
+const fadeUp = { hidden: { opacity: 0, x: -16 }, show: { opacity: 1, x: 0, transition: { duration: 0.25 } } };
 
 function ExpenseModal({ expense, onSave, onClose, CATEGORIES }) {
     const [form, setForm] = useState(expense || {
@@ -40,7 +45,7 @@ function ExpenseModal({ expense, onSave, onClose, CATEGORIES }) {
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
             >
                 <div className="modal-header">
-                    <h3 className="modal-title">{expense ? '✏️ Edit Expense' : '➕ Add Expense'}</h3>
+                    <h3 className="modal-title">{expense ? '✏️ Edit Expense' : '➕ New Expense'}</h3>
                     <button className="btn-icon" onClick={onClose}><X size={16} /></button>
                 </div>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -65,10 +70,10 @@ function ExpenseModal({ expense, onSave, onClose, CATEGORIES }) {
                         <input name="date" type="date" value={form.date} onChange={handleChange} required />
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
-                        <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
-                            <Check size={15} /> {expense ? 'Update' : 'Add Expense'}
-                        </button>
+                        <MagneticButton type="button" variant="secondary" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</MagneticButton>
+                        <MagneticButton type="submit" style={{ flex: 1, justifyContent: 'center' }}>
+                            <Check size={15} /> {expense ? 'Update' : 'Add'}
+                        </MagneticButton>
                     </div>
                 </form>
             </motion.div>
@@ -126,18 +131,18 @@ export default function ExpensesPage() {
 
     return (
         <div className="page-wrapper">
-            <div className="page-header">
+            <motion.div className="page-header" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <div>
                     <h2 className="page-title">💸 Expense Tracker</h2>
                     <p className="page-subtitle">Track and manage all your spending</p>
                 </div>
-                <button className="btn btn-primary" onClick={handleAdd}>
+                <MagneticButton onClick={handleAdd}>
                     <Plus size={16} /> Add Expense
-                </button>
-            </div>
+                </MagneticButton>
+            </motion.div>
 
             {/* Filters */}
-            <motion.div className="glass-card" style={{ padding: 20, marginBottom: 20 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <GlassCard delay={0.05} style={{ padding: 20, marginBottom: 20 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 12, alignItems: 'center' }}>
                     <div style={{ position: 'relative' }}>
                         <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -164,34 +169,31 @@ export default function ExpensesPage() {
                     <Filter size={13} />
                     {filtered.length} expense{filtered.length !== 1 ? 's' : ''} • Total: <strong style={{ color: 'var(--accent-red)' }}>{formatCurrency(total)}</strong>
                     {(search || filterCat !== 'All' || filterPeriod !== 'All') && (
-                        <button className="btn btn-secondary btn-sm" onClick={() => { setSearch(''); setFilterCat('All'); setFilterPeriod('All'); }}>
+                        <MagneticButton variant="secondary" size="sm" onClick={() => { setSearch(''); setFilterCat('All'); setFilterPeriod('All'); }}>
                             <X size={12} /> Clear filters
-                        </button>
+                        </MagneticButton>
                     )}
                 </div>
-            </motion.div>
+            </GlassCard>
 
             {/* Expense List */}
             {filtered.length === 0 ? (
-                <div className="empty-state glass-card" style={{ padding: 48 }}>
+                <GlassCard delay={0.1} style={{ padding: 48, textAlign: 'center' }}>
                     <div className="empty-state-icon">💸</div>
-                    <p style={{ fontSize: 16, marginBottom: 8 }}>No expenses found</p>
-                    <p style={{ fontSize: 13 }}>Try changing your filters or add a new expense</p>
-                    <button className="btn btn-primary btn-sm" style={{ marginTop: 16 }} onClick={handleAdd}>
+                    <p style={{ fontSize: 16, marginBottom: 8, color: 'var(--text-muted)' }}>No expenses found</p>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Try changing your filters or add a new expense</p>
+                    <MagneticButton size="sm" onClick={handleAdd} style={{ marginTop: 16 }}>
                         <Plus size={14} /> Add Expense
-                    </button>
-                </div>
+                    </MagneticButton>
+                </GlassCard>
             ) : (
                 <AnimatePresence>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={stagger} initial="hidden" animate="show">
                         {filtered.map((e, i) => (
                             <motion.div
                                 key={e.id}
                                 className="expense-item"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20, height: 0 }}
-                                transition={{ duration: 0.25, delay: i * 0.02 }}
+                                variants={fadeUp}
                                 layout
                             >
                                 <div className={`expense-icon ${CAT_CLASSES[e.category]}`}>
@@ -225,7 +227,7 @@ export default function ExpensesPage() {
                                 </div>
                             </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 </AnimatePresence>
             )}
 

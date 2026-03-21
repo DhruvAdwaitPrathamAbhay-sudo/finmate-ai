@@ -1,6 +1,14 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Sun, Moon, Bell, Menu } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
+
+function getGreeting() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'Good morning';
+    if (h >= 12 && h < 17) return 'Good afternoon';
+    if (h >= 17 && h < 21) return 'Good evening';
+    return 'Good night';
+}
 
 export default function Topbar({ onMenuClick, title }) {
     const { theme, toggleTheme, user } = useApp();
@@ -8,26 +16,30 @@ export default function Topbar({ onMenuClick, title }) {
     return (
         <header className="topbar">
             <div className="topbar-left">
-                <button className="btn-icon" onClick={onMenuClick} style={{ display: 'none' }} id="menu-btn">
+                <button className="btn-icon" onClick={onMenuClick} style={{ display: 'block' }}>
                     <Menu size={18} />
                 </button>
                 <div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {title}
                     </div>
+                    {user && (
+                        <span className="greeting-text">
+                            {getGreeting()}, <strong>{user.name?.split(' ')[0]}</strong> 👋
+                        </span>
+                    )}
                 </div>
             </div>
             <div className="topbar-right">
                 <button
+                    className={`theme-toggle ${theme === 'light' ? 'light' : ''}`}
                     onClick={toggleTheme}
-                    className="btn-icon"
-                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    aria-label="Toggle theme"
                 >
-                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                    <div className="theme-toggle-knob" />
                 </button>
                 {user && (
-                    <div className="user-avatar" title={user.name}>
+                    <div className="user-avatar">
                         {user.name?.charAt(0).toUpperCase()}
                     </div>
                 )}

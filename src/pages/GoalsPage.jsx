@@ -3,14 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { Plus, Target, Trash2, X, Check, Plus as PlusIcon } from 'lucide-react';
 import { formatCurrency } from '../utils/calculations';
+import GlassCard from '../components/ui/GlassCard';
+import MagneticButton from '../components/ui/MagneticButton';
 
 const GOAL_ICONS = ['🎯', '💻', '✈️', '📱', '🎓', '🚗', '🏠', '💍', '📷', '🎮', '👟', '🎵'];
 const AI_SUGGESTIONS = {
     default: 'Set aside a fixed amount daily to reach your goal faster. Even ₹50/day = ₹1,500/month!',
     '25': 'Great start! You\'re 25% there. Increase your monthly contribution by 10% to finish 3 weeks early!',
-    '50': 'Halfway there! 🎉 Keep the momentum going. You\'re doing amazing!',
+    '50': 'Halfway there! 🎉 Keep the momentum going. You\'re absolutely crushing it!',
     '75': 'Almost done! 🌟 Just one more push. Cut one unnecessary expense this week to cross the finish line!',
-    '100': '🎊 Congratulations! You\'ve reached your goal! Time to set a new one!',
+    '100': '🎊 You did it! Time to celebrate and set your next big goal! 🥳',
 };
 
 function GoalModal({ onSave, onClose }) {
@@ -41,10 +43,12 @@ function GoalModal({ onSave, onClose }) {
                         <label>Choose Icon</label>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             {GOAL_ICONS.map(icon => (
-                                <button
+                                <motion.button
                                     type="button"
                                     key={icon}
                                     onClick={() => setForm(f => ({ ...f, icon }))}
+                                    whileHover={{ scale: 1.15 }}
+                                    whileTap={{ scale: 0.9 }}
                                     style={{
                                         width: 40, height: 40, fontSize: 20, borderRadius: 8, border: '2px solid',
                                         borderColor: form.icon === icon ? 'var(--accent-purple)' : 'var(--border)',
@@ -53,7 +57,7 @@ function GoalModal({ onSave, onClose }) {
                                     }}
                                 >
                                     {icon}
-                                </button>
+                                </motion.button>
                             ))}
                         </div>
                     </div>
@@ -62,10 +66,10 @@ function GoalModal({ onSave, onClose }) {
                         <input name="deadline" type="date" value={form.deadline} onChange={handleChange} />
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
-                        <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                        <MagneticButton type="button" variant="secondary" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</MagneticButton>
+                        <MagneticButton type="submit" style={{ flex: 1, justifyContent: 'center' }}>
                             <Check size={15} /> Create Goal
-                        </button>
+                        </MagneticButton>
                     </div>
                 </form>
             </motion.div>
@@ -99,14 +103,14 @@ function ContributeModal({ goal, onSave, onClose }) {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                         {[500, 1000, 2000, 5000].filter(v => v <= remaining).map(v => (
-                            <button key={v} type="button" className="btn btn-secondary btn-sm" onClick={() => setAmount(String(v))}>₹{v}</button>
+                            <MagneticButton key={v} type="button" variant="secondary" size="sm" onClick={() => setAmount(String(v))}>₹{v}</MagneticButton>
                         ))}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
-                        <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                        <MagneticButton type="button" variant="secondary" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>Cancel</MagneticButton>
+                        <MagneticButton type="submit" style={{ flex: 1, justifyContent: 'center' }}>
                             <Check size={15} /> Add Savings
-                        </button>
+                        </MagneticButton>
                     </div>
                 </form>
             </motion.div>
@@ -133,7 +137,7 @@ export default function GoalsPage() {
         const now = new Date();
         const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
         if (daysLeft < 0) return { text: 'Deadline passed!', color: 'var(--accent-red)' };
-        if (daysLeft < 7) return { text: `${daysLeft} days left`, color: 'var(--accent-orange)' };
+        if (daysLeft < 7) return { text: `${daysLeft} days left — crunch time! 🔥`, color: 'var(--accent-red)' };
         return { text: `${daysLeft} days left`, color: 'var(--text-muted)' };
     }
 
@@ -143,46 +147,46 @@ export default function GoalsPage() {
 
     return (
         <div className="page-wrapper">
-            <div className="page-header">
+            <motion.div className="page-header" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <div>
                     <h2 className="page-title">🎯 Savings Goals</h2>
                     <p className="page-subtitle">Track your financial goals and celebrate milestones</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+                <MagneticButton onClick={() => setShowAdd(true)}>
                     <Plus size={16} /> New Goal
-                </button>
-            </div>
+                </MagneticButton>
+            </motion.div>
 
             {/* Summary Stats */}
             {goals.length > 0 && (
                 <div className="stats-grid" style={{ marginBottom: 24 }}>
                     {[
-                        { label: 'Active Goals', value: goals.length, sub: `${completed} completed` },
+                        { label: 'Active Goals', value: goals.length, sub: `${completed} completed 🎉` },
                         { label: 'Total Target', value: formatCurrency(totalTarget), sub: 'Combined goal value' },
                         { label: 'Total Saved', value: formatCurrency(totalSaved), sub: `${Math.round((totalSaved / totalTarget) * 100)}% overall progress` },
-                        { label: 'Remaining', value: formatCurrency(Math.max(0, totalTarget - totalSaved)), sub: 'To reach all goals' },
+                        { label: 'Remaining', value: formatCurrency(Math.max(0, totalTarget - totalSaved)), sub: 'You got this! 💪' },
                     ].map((card, i) => (
-                        <motion.div key={card.label} className="glass-card stat-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+                        <GlassCard key={card.label} delay={i * 0.06} className="stat-card">
                             <div className="stat-label">{card.label}</div>
                             <div className="stat-value mono">{card.value}</div>
                             <div className="stat-sub">{card.sub}</div>
-                        </motion.div>
+                        </GlassCard>
                     ))}
                 </div>
             )}
 
             {/* Goals list */}
             {goals.length === 0 ? (
-                <motion.div className="glass-card empty-state" style={{ padding: 60 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <GlassCard delay={0.1} style={{ padding: 60, textAlign: 'center' }}>
                     <div style={{ fontSize: 60, marginBottom: 16 }}>🎯</div>
                     <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No Goals Yet</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: 14, maxWidth: 300, margin: '0 auto 24px', lineHeight: 1.6 }}>
                         Set your first savings goal and watch your progress grow! Whether it's a new laptop, trip, or emergency fund.
                     </p>
-                    <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+                    <MagneticButton onClick={() => setShowAdd(true)}>
                         <Plus size={16} /> Set Your First Goal
-                    </button>
-                </motion.div>
+                    </MagneticButton>
+                </GlassCard>
             ) : (
                 <AnimatePresence>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
@@ -193,22 +197,28 @@ export default function GoalsPage() {
                             const dailyNeeded = goal.deadline ? Math.ceil((goal.target - goal.saved) / Math.max(1, Math.ceil((new Date(goal.deadline) - new Date()) / 86400000))) : null;
 
                             return (
-                                <motion.div
+                                <GlassCard
                                     key={goal.id}
-                                    className="glass-card"
+                                    delay={i * 0.08}
                                     style={{ padding: 24, position: 'relative', overflow: 'hidden', border: isComplete ? '1px solid rgba(34,197,94,0.3)' : undefined }}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.08 }}
-                                    layout
                                 >
                                     {isComplete && (
-                                        <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', borderRadius: 99, padding: '3px 10px', fontSize: 11, color: 'var(--accent-green)', fontWeight: 700 }}>
-                                            ✓ COMPLETE
-                                        </div>
+                                        <motion.div
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)', borderRadius: 99, padding: '3px 10px', fontSize: 11, color: 'var(--accent-green)', fontWeight: 700 }}
+                                        >
+                                            ✓ COMPLETE 🎉
+                                        </motion.div>
                                     )}
                                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 18 }}>
-                                        <div style={{ fontSize: 36 }}>{goal.icon}</div>
+                                        <motion.div
+                                            style={{ fontSize: 36 }}
+                                            animate={{ y: [-3, 3, -3] }}
+                                            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                                        >
+                                            {goal.icon}
+                                        </motion.div>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontWeight: 700, fontSize: 16 }}>{goal.name}</div>
                                             {dl && <div style={{ fontSize: 12, color: dl.color, marginTop: 3 }}>⏰ {dl.text}</div>}
@@ -224,13 +234,13 @@ export default function GoalsPage() {
                                             <span style={{ color: 'var(--text-muted)' }}>Progress</span>
                                             <span style={{ fontWeight: 700, color: isComplete ? 'var(--accent-green)' : 'var(--accent-purple)' }}>{pct}%</span>
                                         </div>
-                                        <div className="progress-bar-wrap" style={{ height: 10 }}>
+                                        <div className="progress-bar-wrap progress-bar-bouncy" style={{ height: 10 }}>
                                             <motion.div
-                                                className={`progress-bar-fill ${isComplete ? '' : ''}`}
+                                                className="progress-bar-fill"
                                                 style={{ background: isComplete ? 'linear-gradient(90deg, #22c55e, #14b8a6)' : 'var(--grad-primary)' }}
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${pct}%` }}
-                                                transition={{ duration: 0.8, delay: i * 0.08 }}
+                                                transition={{ duration: 1, delay: i * 0.08, ease: [0.34, 1.56, 0.64, 1] }}
                                             />
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
@@ -244,17 +254,17 @@ export default function GoalsPage() {
                                         🤖 {getAISuggestion(pct)}
                                         {dailyNeeded && !isComplete && (
                                             <div style={{ marginTop: 6, fontWeight: 600, color: 'var(--accent-purple)' }}>
-                                                Save {formatCurrency(dailyNeeded)}/day to reach your deadline!
+                                                Save {formatCurrency(dailyNeeded)}/day to hit your deadline!
                                             </div>
                                         )}
                                     </div>
 
                                     {!isComplete && (
-                                        <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setContributeGoal(goal)}>
+                                        <MagneticButton style={{ width: '100%', justifyContent: 'center' }} onClick={() => setContributeGoal(goal)}>
                                             <PlusIcon size={14} /> Add Savings
-                                        </button>
+                                        </MagneticButton>
                                     )}
-                                </motion.div>
+                                </GlassCard>
                             );
                         })}
                     </div>

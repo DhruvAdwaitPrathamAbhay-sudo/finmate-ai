@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { Send, Bot, Sparkles } from 'lucide-react';
 import { generateAIResponse } from '../data/aiResponses';
+import GlassCard from '../components/ui/GlassCard';
+import MagneticButton from '../components/ui/MagneticButton';
 
 const SUGGESTIONS = [
     "Analyze my spending",
@@ -26,7 +28,6 @@ function TypingIndicator() {
 }
 
 function formatMessage(text) {
-    // Convert **bold** and \n to proper formatting
     return text.split('\n').map((line, i) => {
         const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         return <div key={i} dangerouslySetInnerHTML={{ __html: formatted }} style={{ lineHeight: 1.6 }} />;
@@ -72,36 +73,44 @@ export default function ChatbotPage() {
         sendMessage(input);
     }
 
+    const helpItems = [
+        { icon: '📊', title: 'Spending Analysis', desc: 'Detailed spending pattern breakdown' },
+        { icon: '💰', title: 'Savings Tips', desc: 'Personalized advice to save more' },
+        { icon: '📈', title: 'Investment Advice', desc: 'Student-friendly strategies' },
+        { icon: '⚠️', title: 'Budget Warnings', desc: 'Overspending alerts' },
+        { icon: '🎯', title: 'Goal Planning', desc: 'Reach goals faster' },
+        { icon: '🔮', title: 'Financial Forecast', desc: 'Predict future expenses' },
+    ];
+
     return (
         <div className="page-wrapper">
-            <div className="page-header">
+            <motion.div className="page-header" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
                 <div>
                     <h2 className="page-title">🤖 AI Financial Assistant</h2>
                     <p className="page-subtitle">Get personalized financial insights powered by AI</p>
                 </div>
                 <span className="badge badge-green" style={{ padding: '6px 14px' }}>
-                    <span style={{ width: 7, height: 7, background: 'var(--accent-green)', borderRadius: '50%', display: 'inline-block', marginRight: 6 }} />
+                    <span style={{ width: 7, height: 7, background: 'var(--accent-green)', borderRadius: '50%', display: 'inline-block', marginRight: 6, animation: 'pulse-ring 2s infinite' }} />
                     Online
                 </span>
-            </div>
+            </motion.div>
 
             <div className="two-col" style={{ alignItems: 'start' }}>
                 {/* Chat Window */}
-                <motion.div
-                    className="glass-card"
-                    style={{ gridColumn: '1 / -1' }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
+                <GlassCard delay={0.05} style={{ gridColumn: '1 / -1' }} tilt={false}>
                     {/* Header */}
                     <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--grad-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <motion.div
+                            style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--grad-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        >
                             <Bot size={22} color="white" />
-                        </div>
+                        </motion.div>
                         <div>
                             <div style={{ fontWeight: 700, fontSize: 15 }}>FinMate AI</div>
                             <div style={{ fontSize: 12, color: 'var(--accent-green)' }}>
-                                {isTyping ? '✏️ Typing...' : '● Always here to help'}
+                                {isTyping ? '✏️ Thinking...' : '● Always here to help'}
                             </div>
                         </div>
                     </div>
@@ -109,15 +118,16 @@ export default function ChatbotPage() {
                     {/* Suggestions */}
                     <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {SUGGESTIONS.map(s => (
-                            <button
+                            <MagneticButton
                                 key={s}
-                                className="btn btn-secondary btn-sm"
+                                variant="secondary"
+                                size="sm"
                                 style={{ fontSize: 12 }}
                                 onClick={() => sendMessage(s)}
                                 disabled={isTyping}
                             >
                                 {s}
-                            </button>
+                            </MagneticButton>
                         ))}
                     </div>
 
@@ -167,41 +177,37 @@ export default function ChatbotPage() {
                             style={{ flex: 1 }}
                             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit(e)}
                         />
-                        <button type="submit" className="btn btn-primary" disabled={!input.trim() || isTyping} style={{ padding: '10px 16px' }}>
+                        <MagneticButton type="submit" disabled={!input.trim() || isTyping} style={{ padding: '10px 16px' }}>
                             <Send size={16} />
-                        </button>
+                        </MagneticButton>
                     </form>
-                </motion.div>
+                </GlassCard>
             </div>
 
             {/* Tips */}
-            <motion.div
-                className="glass-card"
-                style={{ padding: 20, marginTop: 20 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-            >
+            <GlassCard delay={0.15} style={{ padding: 20, marginTop: 20 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-secondary)' }}>💡 What I can help with</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-                    {[
-                        { icon: '📊', title: 'Spending Analysis', desc: 'Get detailed breakdown of your spending patterns' },
-                        { icon: '💰', title: 'Savings Tips', desc: 'Personalized advice to save more each month' },
-                        { icon: '📈', title: 'Investment Advice', desc: 'Student-friendly investment strategies' },
-                        { icon: '⚠️', title: 'Budget Warnings', desc: 'Alert you when you\'re overspending' },
-                        { icon: '🎯', title: 'Goal Planning', desc: 'Help you reach your savings goals faster' },
-                        { icon: '🔮', title: 'Financial Forecast', desc: 'Predict and plan for future expenses' },
-                    ].map(item => (
-                        <div key={item.title} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <motion.div
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}
+                    initial="hidden"
+                    animate="show"
+                    variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.2 } } }}
+                >
+                    {helpItems.map(item => (
+                        <motion.div
+                            key={item.title}
+                            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                            style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid var(--border)' }}
+                        >
                             <span style={{ fontSize: 20 }}>{item.icon}</span>
                             <div>
                                 <div style={{ fontSize: 13, fontWeight: 600 }}>{item.title}</div>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{item.desc}</div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
-            </motion.div>
+                </motion.div>
+            </GlassCard>
         </div>
     );
 }
